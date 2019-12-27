@@ -27,6 +27,10 @@ dotnet tool install -g Csc-Manager
 
 You can now use `csc-manager` command.
 
+# Required Environment
+
+Above .NET Core 2.1
+
 # Usage
 
 ## download
