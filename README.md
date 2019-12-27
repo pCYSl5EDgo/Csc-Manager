@@ -85,5 +85,5 @@ MIT
 
 # Special Thanks
 
-Thank you @mob-sakai!
+Thank you [@mob-sakai](https://github.com/mob-sakai)!
 With your [work](https://github.com/mob-sakai/OpenSesameCompilerForUnity), [Japanese articles](https://qiita.com/mob-sakai/items/a24780d68a6133be338f) and discussion you and me, I developed this!
