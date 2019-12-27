@@ -1,0 +1,6 @@
+bin/*
+tools/*
+obj/*
+Properties/*
+.vs/*
+.vscode/*

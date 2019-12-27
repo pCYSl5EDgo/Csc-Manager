@@ -1,0 +1,28 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <RootNamespace>CscInternalVisible</RootNamespace>
+    <LangVersion>7.2</LangVersion>
+    <Authors>pCYSl5EDgo</Authors>
+    <Company>pCYSl5EDgo</Company>
+    <PackageId>Csc-Manager</PackageId>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Copyright>pCYSl5EDgo</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <Version>1.2.1</Version>
+    <PackageReleaseNotes>1.2.1 : If any exception happens, you can read it.
+1.2.0 : MetaDataImportOptions correctly processed now!
+1.1.1 : Process Last Folder Separate Char more user-friendly
+1.1.0 : Add Command Copy
+1.0.0 : Initial Commit</PackageReleaseNotes>
+    <PackAsTool>true</PackAsTool>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MicroBatchFramework" Version="1.6.1" />
+    <PackageReference Include="Mono.Cecil" Version="0.11.1" />
+  </ItemGroup>
+
+</Project>
