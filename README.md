@@ -19,7 +19,7 @@ This tool can
 
 [Csc-Manager](https://github.com/pCYSl5EDgo/Csc-Manager) is distributed as [dotnet global tool](https://www.nuget.org/packages/Csc-Manager/).
 
-On your terminal, you can install the `csc-manager` by below command.
+On your terminal, you can install the `csc-manager` by following command.
 
 ```
 dotnet tool install -g Csc-Manager
@@ -74,10 +74,17 @@ Following options are all optional
 ## Unity
 
 Provide that you use Unity Editor on a windows machine which installed via Unity Hub, you can find the `Microsoft.CodeAnalysis.CSharp.dll` in `C:\Program Files\Unity\Hub\Editor\2020.1.0a14\Editor\Data\Tools\Roslyn`.
+Change the version accoring to your environment.
 
 ## dotnet core
 
 Provide that you want to enable your `dotnet` command to handle correctly `IgnoresAccessChecksToAttribute`, you can find the `Microsoft.CodeAnalysis.CSharp.dll` in `C:\Program Files\dotnet\sdk\3.1.100\Roslyn\bincore`.
+Change the version accoring to your environment.
+
+## Visual Studio Code - OmniSharp
+
+Provide that you use Visual Studio Code on a windows machine you can find the `Microsoft.CodeAnalysis.CSharp.dll` in `%USERPROFILE%\.vscode\extensions\ms-vscode.csharp-1.21.9\.omnisharp\1.34.9`.
+Change the version accoring to your environment.
 
 # LICENSE
 
