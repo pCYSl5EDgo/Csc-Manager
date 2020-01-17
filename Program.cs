@@ -1,62 +1,33 @@
 ﻿using System;
 using System.IO;
-using System.IO.Compression;
 using System.Linq;
-using System.Net.Http;
 using System.Threading.Tasks;
-using MicroBatchFramework;
+using ConsoleAppFramework;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Microsoft.Extensions.Hosting;
 
 namespace CscInternalVisible
 {
-    class Program
+    internal static class Program
     {
         static async Task Main(string[] args)
         {
-            await new HostBuilder().RunBatchEngineAsync<CscManagerBase>(args);
+            await new HostBuilder().RunConsoleAppFrameworkAsync<CscManagerBase>(args);
         }
     }
 
-    public class CscManagerBase : BatchBase
+    public class CscManagerBase : ConsoleAppBase
     {
         private const string RootDirectoryPath = "./";
-        private const string DownloadPath = RootDirectoryPath + "csc.zip";
         private const string DirectoryPath = RootDirectoryPath + "tools/";
         private const string TargetDllFolderPath = DirectoryPath + "tools/";
         private const string TargetDllName = "Microsoft.CodeAnalysis.CSharp.dll";
 
+        private const string CopySuffix = ".copy";
+        private const string BytesSuffix = ".bytes";
 
-        [Command("download", "Download csc files from nuget")]
-        public
-        async Task
-            Download
-        (
-            [Option("version", "C# Compiler Version")] string version = "3.4.0",
-            [Option("download-file", "Downloaded Zip File Name")] string download = DownloadPath,
-            [Option("directory", "Extended directory directory")] string directory = DirectoryPath
-        )
-        {
-            try
-            {
-                var url = new Uri(@"https://www.nuget.org/api/v2/package/Microsoft.Net.Compilers/" + version);
-                await File.WriteAllBytesAsync(download, await new HttpClient().GetByteArrayAsync(url));
-
-                if (Directory.Exists(directory))
-                {
-                    Directory.Delete(directory, true);
-                }
-                Directory.CreateDirectory(directory);
-
-                ZipFile.ExtractToDirectory(DownloadPath, directory, true);
-                File.Delete(download);
-            }
-            catch (Exception e)
-            {
-                Console.Error.WriteLine(e.ToString());
-            }
-        }
+        private void EnableInternalAccess_One(string directory) => EnableInternalAccess(directory);
 
         [Command("enable", "Enables csc to process internal access")]
         public
@@ -65,56 +36,153 @@ namespace CscInternalVisible
         (
             [Option("directory", "Directory contains Microsoft.CodeAnalysis.CSharp.dll")] string directory = TargetDllFolderPath,
             [Option("path", "Microsoft.CodeAnalysis.CSharp.dll path")] string path = "",
-            [Option("flag", "TopLevelBinderFlags")] uint binderFlags = 0x400000,
-            [Option("suffix")] string suffix = ""
+            [Option("flag", "TopLevelBinderFlags")] uint binderFlags = 0x400000
         )
         {
             try
             {
-                Console.WriteLine(directory);
                 if (string.IsNullOrWhiteSpace(path))
+                {
+                    Console.WriteLine("Directory : " + directory);
                     path = Path.Combine(directory, TargetDllName);
-                Console.WriteLine(path);
-                Console.WriteLine(suffix);
-                var module = ReadModule(directory, path, string.IsNullOrWhiteSpace(suffix));
-
-                if ((module.Attributes & ModuleAttributes.ILLibrary) != 0)
+                }
+                else
                 {
-                    module.Attributes = (module.Attributes ^ ModuleAttributes.ILLibrary) | ModuleAttributes.ILOnly;
-                    Console.WriteLine(module.Attributes.ToString());
+                    Console.WriteLine("File : " + path);
                 }
 
-                var csharpCompilationOptions = module.GetType("Microsoft.CodeAnalysis.CSharp", "CSharpCompilationOptions");
-                var topLevelBinderFlagsField = csharpCompilationOptions.Fields.Single(x => x.FieldType.Name == "BinderFlags");
+                PrepareFile(path);
 
-                var compilationOptions = csharpCompilationOptions.BaseType.Resolve();
-                var metaDataImportOptionsProperty = compilationOptions.Properties.Single(x => x.PropertyType.Name == "MetadataImportOptions");
-                var metaDataImportOptionsSetter = module.ImportReference(metaDataImportOptionsProperty.SetMethod);
-                var metaDataImportOptionsGetter = module.ImportReference(metaDataImportOptionsProperty.GetMethod);
-
-                var constructors = csharpCompilationOptions.Methods.Where(x => x.IsConstructor);
-                #if DEBUG
-                var console = new TypeReference("System", "Console", module, module.TypeSystem.CoreLibrary, false);
-                var writeLine = new MethodReference("WriteLine", module.TypeSystem.Void, console)
+                using (var module = ReadModule(directory, path, false))
                 {
-                    Parameters = {new ParameterDefinition(module.TypeSystem.Object)}
-                };
-                #endif
-                foreach (var constructor in constructors)
-                {
-                    #if DEBUG
-                    EnableIgnoreAccessibility(constructor, topLevelBinderFlagsField, metaDataImportOptionsSetter, binderFlags, metaDataImportOptionsGetter, writeLine);
-                    #else
-                EnableIgnoreAccessibility(constructor, topLevelBinderFlagsField, metaDataImportOptionsSetter, binderFlags);
-                    #endif
+                    AddInternalVisibility(module, path, binderFlags);
                 }
-                RewriteSetter(csharpCompilationOptions, binderFlags);
-                module.Write(path + suffix);
+
+                ExchangeFile(path);
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 Console.Error.WriteLine(e.ToString());
             }
+        }
+
+        [Command("enable-vscode", "Enables csc to process internal access of Visual Studio Code")]
+        public void EnableInternalAccessVsCode()
+        {
+            try
+            {
+                ProcessForEachVsCodeOmnisharpExtensions(EnableInternalAccess_One);
+            }
+            catch (Exception e)
+            {
+                Console.Error.WriteLine(e.ToString());
+            }
+        }
+
+        private void Disable_One(string directory = TargetDllFolderPath) => Disable(directory);
+
+        [Command("disable", "Disable_One csc not to process internal access any more")]
+        public void Disable(
+                [Option("directory", "Directory contains Microsoft.CodeAnalysis.CSharp.dll")]
+                string directory = TargetDllFolderPath,
+                [Option("path", "Microsoft.CodeAnalysis.CSharp.dll path")]
+                string path = ""
+            )
+        {
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                Console.WriteLine("Directory : " + directory);
+                path = Path.Combine(directory, TargetDllName);
+            }
+            else
+            {
+                Console.WriteLine("File : " + path);
+            }
+            PrepareFile(path);
+        }
+
+        [Command("disable-vscode", "Disable_One csc not to process internal access any more")]
+        public void
+            DisableVsCode()
+        {
+            try
+            {
+                ProcessForEachVsCodeOmnisharpExtensions(Disable_One);
+            }
+            catch (Exception e)
+            {
+                Console.Error.WriteLine(e.ToString());
+            }
+        }
+
+        private static void ProcessForEachVsCodeOmnisharpExtensions(Action<string> ProcessDictionary)
+        {
+            var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile, Environment.SpecialFolderOption.None);
+            if (string.IsNullOrWhiteSpace(home))
+                throw new DirectoryNotFoundException(Environment.SpecialFolder.UserProfile.ToString());
+            var vsCode = Path.Combine(home, ".vscode", "extensions");
+            foreach (var msVsCodeCsharp in Directory.EnumerateDirectories(vsCode, "ms-vscode.csharp-*"))
+            {
+                string omnisharp = Path.Combine(msVsCodeCsharp, "." + nameof(omnisharp));
+                foreach (var versionDirectoryUnderOmnisharp in Directory.EnumerateDirectories(omnisharp, "*"))
+                {
+                    ProcessDictionary(versionDirectoryUnderOmnisharp);
+                }
+            }
+        }
+
+        private static void ExchangeFile(string path)
+        {
+            var byteFileName = path + BytesSuffix;
+            if (File.Exists(byteFileName))
+                File.Delete(byteFileName);
+            File.Move(path, byteFileName);
+            File.Move(path + CopySuffix, path);
+        }
+
+        private static void AddInternalVisibility(ModuleDefinition module, string path, uint binderFlags)
+        {
+            if ((module.Attributes & ModuleAttributes.ILLibrary) != 0)
+            {
+                module.Attributes = (module.Attributes ^ ModuleAttributes.ILLibrary) | ModuleAttributes.ILOnly;
+                Console.WriteLine(module.Attributes.ToString());
+            }
+
+            var csharpCompilationOptions = module.GetType("Microsoft.CodeAnalysis.CSharp", "CSharpCompilationOptions");
+            var topLevelBinderFlagsField = csharpCompilationOptions.Fields.Single(x => x.FieldType.Name == "BinderFlags");
+
+            var compilationOptions = csharpCompilationOptions.BaseType.Resolve();
+            var metaDataImportOptionsProperty = compilationOptions.Properties.Single(x => x.PropertyType.Name == "MetadataImportOptions");
+            var metaDataImportOptionsSetter = module.ImportReference(metaDataImportOptionsProperty.SetMethod);
+            var metaDataImportOptionsGetter = module.ImportReference(metaDataImportOptionsProperty.GetMethod);
+
+            var constructors = csharpCompilationOptions.Methods.Where(x => x.IsConstructor);
+#if DEBUG
+            var console = new TypeReference("System", "Console", module, module.TypeSystem.CoreLibrary, false);
+            var writeLine = new MethodReference("WriteLine", module.TypeSystem.Void, console)
+            {
+                Parameters = { new ParameterDefinition(module.TypeSystem.Object) }
+            };
+#endif
+            foreach (var constructor in constructors)
+            {
+#if DEBUG
+                EnableIgnoreAccessibility(constructor, topLevelBinderFlagsField, metaDataImportOptionsSetter, binderFlags, metaDataImportOptionsGetter, writeLine);
+#else
+                EnableIgnoreAccessibility(constructor, topLevelBinderFlagsField, metaDataImportOptionsSetter, binderFlags);
+#endif
+            }
+            RewriteSetter(csharpCompilationOptions, binderFlags);
+            module.Write(path + CopySuffix);
+        }
+
+        private static void PrepareFile(string path)
+        {
+            var bytePath = path + BytesSuffix;
+            if (!File.Exists(bytePath)) return;
+            if (File.Exists(path))
+                File.Delete(path);
+            File.Move(bytePath, path);
         }
 
         private static void RewriteSetter(TypeDefinition csharpCompilationOptions, uint flag)
@@ -206,32 +274,6 @@ namespace CscInternalVisible
             {
                 processor.InsertAfter(adds[j - 1], adds[j]);
             }
-        }
-
-        [Command("copy", "Copy Roslyn to destination directory")]
-        public int
-            Copy(
-                [Option(0, "Destination Directory")] string destination,
-                [Option("source", "Source Directory")] string source = TargetDllFolderPath
-            )
-        {
-            if (string.IsNullOrWhiteSpace(destination))
-            {
-                Console.Error.WriteLine("Empty Input!");
-                return 1;
-            }
-            destination = destination.TrimEnd('\\');
-            if (!Directory.Exists(source))
-            {
-                Console.Error.WriteLine("Does not exist " + source);
-                return 1;
-            }
-            if (Directory.Exists(destination))
-            {
-                Directory.Delete(destination, true);
-            }
-            Directory.Move(source, destination);
-            return 0;
         }
     }
 }

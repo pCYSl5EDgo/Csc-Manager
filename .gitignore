@@ -4,3 +4,5 @@ obj/*
 Properties/*
 .vs/*
 .vscode/*
+
+*.sln*

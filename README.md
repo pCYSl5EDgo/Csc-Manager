@@ -12,8 +12,10 @@ You can access other assemblies' internal/private members without any restrictio
 
 This tool can
  
- - `download` csc.exe from [Microsoft's official Nuget package](https://www.nuget.org/packages/Microsoft.Net.Compilers).
  - `enable`s csc.exe to compile codes that contain internal/private access.
+ - `disable`s csc.exe not to compile codes that contain internal/private access.
+ - `enable-vscode`s csc.exe to compile codes that contain internal/private access.
+ - `disable-vscode`s csc.exe not to compile codes that contain internal/private access.
 
 # Install
 
@@ -33,41 +35,65 @@ Above .NET Core 2.1
 
 # Usage
 
-## download
-
-This command downloads [Microsoft.Net.Compilers](https://www.nuget.org/packages/Microsoft.Net.Compilers) package and extend it to obtain valid compiler.
-
-Following options are all optional
-
- - `-version` default value => `3.4.0`
-  - Csc Version String
-  - Latest stable C#8 Compiler is `3.4.0`
- - `-download-file` default value => `./csc.zip`
-  - Temporary file name
- - `-directory` default value => `./tools/`
-  - Extended zip archive root directory
-
-Example
-
-```
-csc-manager download -version 3.4.0
-```
-
 ## enable
 
 This command modifies the existing `Microsoft.CodeAnalysis.CSharp.dll` in order to enable `csc.exe` to process `IgnoresAccessChecksToAttribute`.
+This saves original data as as a file `Microsoft.CodeAnalysis.CSharp.dll.bytes`.
 
-Following options are all optional
+Following options are all optional.
 
+ - `-directory` default value => `./tools/tools/`
+  - Directory contains all assemblies which `Microsoft.CodeAnalysis.CSharp.dll` is dependent on.
  - `-path` default value => empty string
   - `Microsoft.CodeAnalysis.CSharp.dll` path.
   - If it is empty, `Microsoft.CodeAnalysis.CSharp.dll` will be searched in the `-directory` folder.
+
+Sample Code
+
+```
+csc-manager enable -directory "C:\Program Files\dotnet\sdk\3.1.101\Roslyn\bincore"
+```
+
+## disable
+
+This command restores `Microsoft.CodeAnalysis.CSharp.dll` to its original condition by rename `Microsoft.CodeAnalysis.CSharp.dll.bytes` `Microsoft.CodeAnalysis.CSharp.dll`.
+
+Following options are all optional.
+
  - `-directory` default value => `./tools/tools/`
   - Directory contains all assemblies which `Microsoft.CodeAnalysis.CSharp.dll` is dependent on.
- - `-suffix` default value => empty string
-  - If it is empty, `Microsoft.CodeAnalysis.CSharp.dll` is modified.
-  - If it is not empty, `Microsoft.CodeAnalysis.CSharp.dll` is not modified. Modified dll is generated.
+ - `-path` default value => empty string
+  - `Microsoft.CodeAnalysis.CSharp.dll` path.
+  - If it is empty, `Microsoft.CodeAnalysis.CSharp.dll` will be searched in the `-directory` folder.
 
+Sample Code
+
+```
+csc-manager disable -directory "C:\Program Files\dotnet\sdk\3.1.101\Roslyn\bincore"
+```
+
+## enable-vscode
+
+VS Code is a special Editor.
+When you use [IgnoresAccessChecksToAttribute](https://www.strathweb.com/2018/10/no-internalvisibleto-no-problem-bypassing-c-visibility-rules-with-roslyn/), you have a lot of errors related to internal/private access.
+
+No options are provided.
+
+Sample Code
+
+```
+csc-manager enable-vscode
+```
+
+## disable-vscode
+
+This command restores `Microsoft.CodeAnalysis.CSharp.dll` of OmniSharp to its original condition by rename `Microsoft.CodeAnalysis.CSharp.dll.bytes` `Microsoft.CodeAnalysis.CSharp.dll`.
+
+Sample Code
+
+```
+csc-manager disable-vscode
+```
 
 # Hint
 
@@ -79,11 +105,6 @@ Change the version accoring to your environment.
 ## dotnet core
 
 Provide that you want to enable your `dotnet` command to handle correctly `IgnoresAccessChecksToAttribute`, you can find the `Microsoft.CodeAnalysis.CSharp.dll` in `C:\Program Files\dotnet\sdk\3.1.100\Roslyn\bincore`.
-Change the version accoring to your environment.
-
-## Visual Studio Code - OmniSharp
-
-Provide that you use Visual Studio Code on a windows machine you can find the `Microsoft.CodeAnalysis.CSharp.dll` in `%USERPROFILE%\.vscode\extensions\ms-vscode.csharp-1.21.9\.omnisharp\1.34.9`.
 Change the version accoring to your environment.
 
 # LICENSE

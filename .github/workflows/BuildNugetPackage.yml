@@ -1,0 +1,20 @@
+name: BuildNugetPackage
+
+on: push
+
+jobs:
+  Build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/setup-dotnet@master
+      with:
+          dotnet-version: '3.1.101'
+    - run: |
+        dotnet restore
+        dotnet build -c Release
+        dotnet pack -c Release
+    - uses: actions/upload-artifact@master
+      with:
+        path: nupkg
+        name: NugetPackage
