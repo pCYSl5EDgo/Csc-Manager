@@ -115,18 +115,22 @@ namespace CscInternalVisible
             }
         }
 
-        private static void ProcessForEachVsCodeOmnisharpExtensions(Action<string> ProcessDictionary)
+        private static void ProcessForEachVsCodeOmnisharpExtensions(Action<string> processDictionary)
         {
             var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile, Environment.SpecialFolderOption.None);
             if (string.IsNullOrWhiteSpace(home))
                 throw new DirectoryNotFoundException(Environment.SpecialFolder.UserProfile.ToString());
             var vsCode = Path.Combine(home, ".vscode", "extensions");
+            if (!Directory.Exists(vsCode)) throw new DirectoryNotFoundException(vsCode);
             foreach (var msVsCodeCsharp in Directory.EnumerateDirectories(vsCode, "ms-vscode.csharp-*"))
             {
                 string omnisharp = Path.Combine(msVsCodeCsharp, "." + nameof(omnisharp));
+                if (!Directory.Exists(omnisharp)) continue;
                 foreach (var versionDirectoryUnderOmnisharp in Directory.EnumerateDirectories(omnisharp, "*"))
                 {
-                    ProcessDictionary(versionDirectoryUnderOmnisharp);
+                    var omnisharpDirectory = Path.Combine(versionDirectoryUnderOmnisharp, "omnisharp");
+                    if (!Directory.Exists(omnisharpDirectory)) continue;
+                    processDictionary(versionDirectoryUnderOmnisharp);
                 }
             }
         }
@@ -142,11 +146,7 @@ namespace CscInternalVisible
 
         private static void AddInternalVisibility(ModuleDefinition module, string path, uint binderFlags)
         {
-            if ((module.Attributes & ModuleAttributes.ILLibrary) != 0)
-            {
-                module.Attributes = (module.Attributes ^ ModuleAttributes.ILLibrary) | ModuleAttributes.ILOnly;
-                Console.WriteLine(module.Attributes.ToString());
-            }
+            ModifyModuleAsILOnly(module);
 
             var csharpCompilationOptions = module.GetType("Microsoft.CodeAnalysis.CSharp", "CSharpCompilationOptions");
             var topLevelBinderFlagsField = csharpCompilationOptions.Fields.Single(x => x.FieldType.Name == "BinderFlags");
@@ -174,6 +174,15 @@ namespace CscInternalVisible
             }
             RewriteSetter(csharpCompilationOptions, binderFlags);
             module.Write(path + CopySuffix);
+        }
+
+        private static void ModifyModuleAsILOnly(ModuleDefinition module)
+        {
+            if ((module.Attributes & ModuleAttributes.ILLibrary) != 0)
+            {
+                module.Attributes = (module.Attributes ^ ModuleAttributes.ILLibrary) | ModuleAttributes.ILOnly;
+                Console.WriteLine(module.Attributes.ToString());
+            }
         }
 
         private static void PrepareFile(string path)
