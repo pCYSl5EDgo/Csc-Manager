@@ -27,12 +27,12 @@ namespace CscInternalVisible
         private const string CopySuffix = ".copy";
         private const string BytesSuffix = ".bytes";
 
-        private void EnableInternalAccess_One(string directory) => EnableInternalAccess(directory);
+        private void Enable_One(string file) => Enable(path: file);
 
         [Command("enable", "Enables csc to process internal access")]
         public
         void
-            EnableInternalAccess
+            Enable
         (
             [Option("directory", "Directory contains Microsoft.CodeAnalysis.CSharp.dll")] string directory = TargetDllFolderPath,
             [Option("path", "Microsoft.CodeAnalysis.CSharp.dll path")] string path = "",
@@ -59,63 +59,74 @@ namespace CscInternalVisible
                 }
 
                 ExchangeFile(path);
+                Console.WriteLine("Enable done : " + path);
             }
             catch (Exception e)
             {
-                Console.Error.WriteLine(e.ToString());
+                Console.WriteLine(e.ToString());
+            }
+        }
+
+        private void Disable_One(string file) => Disable(path: file);
+
+        [Command("disable", "Disable csc not to process internal access any more")]
+        public void Disable(
+                [Option("directory", "Directory contains " + TargetDllName)]
+                string directory = TargetDllFolderPath,
+                [Option("path", TargetDllName + " path")]
+                string path = ""
+            )
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(path))
+                {
+                    Console.WriteLine("Directory : " + directory);
+                    path = Path.Combine(directory, TargetDllName);
+                }
+                else
+                {
+                    Console.WriteLine("File : " + path);
+                }
+                PrepareFile(path);
+                Console.WriteLine("Disable done : " + path);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
             }
         }
 
         [Command("enable-vscode", "Enables csc to process internal access of Visual Studio Code")]
-        public void EnableInternalAccessVsCode()
+        public void EnableVsCode()
         {
             try
             {
-                ProcessForEachVsCodeOmnisharpExtensions(EnableInternalAccess_One);
+                ProcessForEachVsCodeOmnisharpExtensions(Enable_One);
+                Console.WriteLine("Enable done for vscode.");
             }
             catch (Exception e)
             {
-                Console.Error.WriteLine(e.ToString());
+                Console.WriteLine(e.ToString());
             }
         }
 
-        private void Disable_One(string directory = TargetDllFolderPath) => Disable(directory);
-
-        [Command("disable", "Disable_One csc not to process internal access any more")]
-        public void Disable(
-                [Option("directory", "Directory contains Microsoft.CodeAnalysis.CSharp.dll")]
-                string directory = TargetDllFolderPath,
-                [Option("path", "Microsoft.CodeAnalysis.CSharp.dll path")]
-                string path = ""
-            )
-        {
-            if (string.IsNullOrWhiteSpace(path))
-            {
-                Console.WriteLine("Directory : " + directory);
-                path = Path.Combine(directory, TargetDllName);
-            }
-            else
-            {
-                Console.WriteLine("File : " + path);
-            }
-            PrepareFile(path);
-        }
-
-        [Command("disable-vscode", "Disable_One csc not to process internal access any more")]
+        [Command("disable-vscode", "Disable csc of VsCode not to process internal access any more")]
         public void
             DisableVsCode()
         {
             try
             {
                 ProcessForEachVsCodeOmnisharpExtensions(Disable_One);
+                Console.WriteLine("Disable done for vscode.");
             }
             catch (Exception e)
             {
-                Console.Error.WriteLine(e.ToString());
+                Console.WriteLine(e.ToString());
             }
         }
 
-        private static void ProcessForEachVsCodeOmnisharpExtensions(Action<string> processDictionary)
+        private static void ProcessForEachVsCodeOmnisharpExtensions(Action<string> processFile)
         {
             var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile, Environment.SpecialFolderOption.None);
             if (string.IsNullOrWhiteSpace(home))
@@ -126,12 +137,49 @@ namespace CscInternalVisible
             {
                 string omnisharp = Path.Combine(msVsCodeCsharp, "." + nameof(omnisharp));
                 if (!Directory.Exists(omnisharp)) continue;
-                foreach (var versionDirectoryUnderOmnisharp in Directory.EnumerateDirectories(omnisharp, "*"))
+                foreach (var dllFilePath in Directory.EnumerateFiles(omnisharp, TargetDllName, SearchOption.AllDirectories))
                 {
-                    var omnisharpDirectory = Path.Combine(versionDirectoryUnderOmnisharp, "omnisharp");
-                    if (!Directory.Exists(omnisharpDirectory)) continue;
-                    processDictionary(versionDirectoryUnderOmnisharp);
+                    processFile(dllFilePath);
                 }
+            }
+        }
+
+        [Command("enable-dotnet", "Enable all dotnet roslyn compiler to process internal access")]
+        public void EnableDotNet()
+        {
+            try
+            {
+                ProcessForEachDotnetCore(Enable_One);
+                Console.WriteLine("Enable done for dotnet.");
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+            }
+        }
+        [Command("disable-dotnet", "Disable all dotnet roslyn compiler not to process internal access any more")]
+        public void DisableDotNet()
+        {
+            try
+            {
+                ProcessForEachDotnetCore(Disable_One);
+                Console.WriteLine("Enable done for dotnet.");
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+            }
+        }
+
+        private static void ProcessForEachDotnetCore(Action<string> processFile)
+        {
+            var programs = Environment.GetFolderPath(Environment.SpecialFolder.Programs, Environment.SpecialFolderOption.None);
+            if (string.IsNullOrWhiteSpace(programs))
+                programs = "/usr/share/";
+            var dotnet = Path.Combine(programs, "dotnet");
+            foreach (var dllFilePath in Directory.EnumerateFiles(dotnet, TargetDllName, SearchOption.AllDirectories))
+            {
+                processFile(dllFilePath);
             }
         }
 

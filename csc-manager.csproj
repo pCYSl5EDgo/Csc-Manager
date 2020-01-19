@@ -8,19 +8,21 @@
     <Authors>pCYSl5EDgo</Authors>
     <Company>pCYSl5EDgo</Company>
     <PackageId>Csc-Manager</PackageId>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Copyright>pCYSl5EDgo</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <Version>2.0.1</Version>
+    <Version>2.1.0</Version>
     <ToolCommandName>csc-manager</ToolCommandName>
     <PackageOutputPath>./nupkg</PackageOutputPath>
-    <PackageReleaseNotes>2.0.1 : Fix the wrong path of enable/disable-vscode.
+    <RepositoryUrl>https://github.com/pCYSl5EDgo/Csc-Manager</RepositoryUrl>
+    <PackageReleaseNotes>2.1.0 : Add enable/disable-dotnet.
+2.0.1 : Fix the wrong path of enable/disable-vscode.
 2.0.0 : Add enable-vscode. Change API surface.
 1.2.1 : If any exception happens, you can read it.
 1.2.0 : MetaDataImportOptions correctly processed now!
 1.1.1 : Process Last Folder Separate Char more user-friendly
 1.1.0 : Add Command Copy
 1.0.0 : Initial Commit</PackageReleaseNotes>
+    <GeneratePackageOnBuild Condition="Exists('/bin')">true</GeneratePackageOnBuild>
     <PackAsTool Condition="Exists('/bin')">true</PackAsTool>
   </PropertyGroup>
 

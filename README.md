@@ -95,6 +95,28 @@ Sample Code
 csc-manager disable-vscode
 ```
 
+## enable-dotnet
+
+Enable your dotnet sdk to access internal/private members.
+
+No options are provided.
+
+Sample Code
+
+```
+csc-manager enable-dotnet
+```
+
+## disable-dotnet
+
+This command restores `Microsoft.CodeAnalysis.CSharp.dll` of dotnet runtimes&amp;sdks to its original condition by rename `Microsoft.CodeAnalysis.CSharp.dll.bytes` `Microsoft.CodeAnalysis.CSharp.dll`.
+
+Sample Code
+
+```
+csc-manager disable-dotnet
+```
+
 # Hint
 
 ## Unity
