@@ -42,7 +42,7 @@ This saves original data as as a file `Microsoft.CodeAnalysis.CSharp.dll.bytes`.
 
 Following options are all optional.
 
- - `-directory` default value => `./tools/tools/`
+ - `-directory`
   - Directory contains all assemblies which `Microsoft.CodeAnalysis.CSharp.dll` is dependent on.
  - `-path` default value => empty string
   - `Microsoft.CodeAnalysis.CSharp.dll` path.
@@ -60,7 +60,7 @@ This command restores `Microsoft.CodeAnalysis.CSharp.dll` to its original condit
 
 Following options are all optional.
 
- - `-directory` default value => `./tools/tools/`
+ - `-directory`
   - Directory contains all assemblies which `Microsoft.CodeAnalysis.CSharp.dll` is dependent on.
  - `-path` default value => empty string
   - `Microsoft.CodeAnalysis.CSharp.dll` path.
@@ -115,6 +115,28 @@ Sample Code
 
 ```
 csc-manager disable-dotnet
+```
+
+### download
+
+This command downloads Csc compiler from Nuget Package.
+
+Sample Code
+
+```
+mkdir cscDir
+csc-manager download cscDir
+```
+
+### generate
+
+This command downloads Csc compiler from Nuget Package and enables it.
+
+Sample Code
+
+```
+mkdir cscDir
+csc-manager generate cscDir
 ```
 
 # Hint

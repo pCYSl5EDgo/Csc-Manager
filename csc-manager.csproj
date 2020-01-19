@@ -10,11 +10,12 @@
     <PackageId>Csc-Manager</PackageId>
     <Copyright>pCYSl5EDgo</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <Version>2.1.0</Version>
+    <Version>2.2.0</Version>
     <ToolCommandName>csc-manager</ToolCommandName>
     <PackageOutputPath>./nupkg</PackageOutputPath>
     <RepositoryUrl>https://github.com/pCYSl5EDgo/Csc-Manager</RepositoryUrl>
-    <PackageReleaseNotes>2.1.0 : Add enable/disable-dotnet.
+    <PackageReleaseNotes>2.2.0 : Add download/generate command.
+2.1.0 : Add enable/disable-dotnet.
 2.0.1 : Fix the wrong path of enable/disable-vscode.
 2.0.0 : Add enable-vscode. Change API surface.
 1.2.1 : If any exception happens, you can read it.

@@ -1,17 +1,23 @@
 ﻿using System;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
 using ConsoleAppFramework;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Microsoft.Extensions.Hosting;
+using AssemblyDefinition = Mono.Cecil.AssemblyDefinition;
+using MethodDefinition = Mono.Cecil.MethodDefinition;
+using ModuleDefinition = Mono.Cecil.ModuleDefinition;
+using TypeDefinition = Mono.Cecil.TypeDefinition;
 
 namespace CscInternalVisible
 {
     internal static class Program
     {
-        static async Task Main(string[] args)
+        private static async Task Main(string[] args)
         {
             await new HostBuilder().RunConsoleAppFrameworkAsync<CscManagerBase>(args);
         }
@@ -19,9 +25,6 @@ namespace CscInternalVisible
 
     public class CscManagerBase : ConsoleAppBase
     {
-        private const string RootDirectoryPath = "./";
-        private const string DirectoryPath = RootDirectoryPath + "tools/";
-        private const string TargetDllFolderPath = DirectoryPath + "tools/";
         private const string TargetDllName = "Microsoft.CodeAnalysis.CSharp.dll";
 
         private const string CopySuffix = ".copy";
@@ -34,7 +37,7 @@ namespace CscInternalVisible
         void
             Enable
         (
-            [Option("directory", "Directory contains Microsoft.CodeAnalysis.CSharp.dll")] string directory = TargetDllFolderPath,
+            [Option("directory", "Directory contains Microsoft.CodeAnalysis.CSharp.dll")] string directory = "",
             [Option("path", "Microsoft.CodeAnalysis.CSharp.dll path")] string path = "",
             [Option("flag", "TopLevelBinderFlags")] uint binderFlags = 0x400000
         )
@@ -49,6 +52,10 @@ namespace CscInternalVisible
                 else
                 {
                     Console.WriteLine("File : " + path);
+                    if (string.IsNullOrWhiteSpace(directory))
+                    {
+                        directory = Path.GetDirectoryName(path);
+                    }
                 }
 
                 PrepareFile(path);
@@ -72,7 +79,7 @@ namespace CscInternalVisible
         [Command("disable", "Disable csc not to process internal access any more")]
         public void Disable(
                 [Option("directory", "Directory contains " + TargetDllName)]
-                string directory = TargetDllFolderPath,
+                string directory = "",
                 [Option("path", TargetDllName + " path")]
                 string path = ""
             )
@@ -173,14 +180,65 @@ namespace CscInternalVisible
 
         private static void ProcessForEachDotnetCore(Action<string> processFile)
         {
-            var programs = Environment.GetFolderPath(Environment.SpecialFolder.Programs, Environment.SpecialFolderOption.None);
+            var programs = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles, Environment.SpecialFolderOption.None);
             if (string.IsNullOrWhiteSpace(programs))
                 programs = "/usr/share/";
-            var dotnet = Path.Combine(programs, "dotnet");
-            foreach (var dllFilePath in Directory.EnumerateFiles(dotnet, TargetDllName, SearchOption.AllDirectories))
+            var dotnet = Path.Combine(programs, "dotnet", "sdk");
+            foreach (var eachVersionDirectory in Directory.EnumerateDirectories(dotnet))
             {
-                processFile(dllFilePath);
+                const string nugetFallbackFolder = "NuGetFallbackFolder";
+                if (eachVersionDirectory.EndsWith(nugetFallbackFolder) || eachVersionDirectory.EndsWith(nugetFallbackFolder + "/")) continue;
+                Console.WriteLine(eachVersionDirectory);
+                foreach (var dllFilePath in Directory.EnumerateFiles(eachVersionDirectory, TargetDllName, SearchOption.AllDirectories))
+                {
+                    processFile(dllFilePath);
+                }
             }
+        }
+
+        [Command("download", "Download csc files from nuget")]
+        public
+            async Task
+            Download
+            (
+                [Option(0, "Extended directory directory\n**WARNING**\nThe folder shall be cleared at the first step.")] string directory,
+                [Option("version", "C# Compiler Version")] string version = "3.4.0"
+            )
+        {
+            try
+            {
+                var url = new Uri(@"https://www.nuget.org/api/v2/package/Microsoft.Net.Compilers/" + version);
+                var download = Path.GetTempFileName();
+
+                await File.WriteAllBytesAsync(download, await new HttpClient().GetByteArrayAsync(url));
+
+                if (Directory.Exists(directory))
+                {
+                    Directory.Delete(directory, true);
+                }
+                Directory.CreateDirectory(directory);
+
+                ZipFile.ExtractToDirectory(download, directory, true);
+                File.Delete(download);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+            }
+        }
+
+        [Command("generate", "Download csc files from nuget and Enable it")]
+        public
+            async Task
+            Generate
+            (
+                [Option(0, "Extended directory directory.\n**WARNING**\nThe folder shall be cleared at the first step.")]
+                string directory,
+                [Option("version", "C# Compiler Version")]
+                string version = "3.4.0")
+        {
+            await Download(directory, version);
+            Enable(Path.Combine(directory, "tools"));
         }
 
         private static void ExchangeFile(string path)
