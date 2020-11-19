@@ -2,19 +2,20 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <TargetFrameworks>netcoreapp2.1;netcoreapp3.1;net5.0</TargetFrameworks>
     <RootNamespace>CscInternalVisible</RootNamespace>
-    <LangVersion>7.2</LangVersion>
+    <LangVersion>9</LangVersion>
     <Authors>pCYSl5EDgo</Authors>
     <Company>pCYSl5EDgo</Company>
     <PackageId>Csc-Manager</PackageId>
     <Copyright>pCYSl5EDgo</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <Version>2.2.0</Version>
+    <Version>2.3.0-1.preview</Version>
     <ToolCommandName>csc-manager</ToolCommandName>
     <PackageOutputPath>./nupkg</PackageOutputPath>
     <RepositoryUrl>https://github.com/pCYSl5EDgo/Csc-Manager</RepositoryUrl>
-    <PackageReleaseNotes>2.2.0 : Add download/generate command.
+    <PackageReleaseNotes>2.3.0-1.preview : Multi-target framework
+2.2.0 : Add download/generate command.
 2.1.0 : Add enable/disable-dotnet.
 2.0.1 : Fix the wrong path of enable/disable-vscode.
 2.0.0 : Add enable-vscode. Change API surface.
@@ -29,7 +30,7 @@
 
   <ItemGroup>
     <PackageReference Include="ConsoleAppFramework" Version="2.0.1" />
-    <PackageReference Include="Mono.Cecil" Version="0.11.1" />
+    <PackageReference Include="Mono.Cecil" Version="0.11.3" />
   </ItemGroup>
 
 </Project>
